@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ma Maison" />
+  <meta name="theme-color" content="#000000" />
+  <title>Ma Maison</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #000000;
+      --bg2: #0a0a0a;
+      --card: rgba(28,28,30,0.9);
+      --card2: rgba(44,44,46,0.8);
+      --border: rgba(255,255,255,0.08);
+      --text: #ffffff;
+      --text2: rgba(255,255,255,0.55);
+      --text3: rgba(255,255,255,0.3);
+      --accent: #0a84ff;
+      --green: #30d158;
+      --orange: #ff9f0a;
+      --red: #ff453a;
+      --yellow: #ffd60a;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --safe-top: env(safe-area-inset-top, 44px);
+      --safe-bottom: env(safe-area-inset-bottom, 34px);
+    }
+
+```
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, 'SF Pro Display', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LOCK SCREEN ── */
+#lockScreen {
+  position: fixed; inset: 0; z-index: 100;
+  background: linear-gradient(160deg, #0d1117 0%, #000510 50%, #010a0a 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0;
+}
+#lockScreen.hidden { display: none; }
+
+.lock-time {
+  font-size: 72px; font-weight: 200; letter-spacing: -3px;
+  color: white; line-height: 1;
+  text-shadow: 0 0 40px rgba(10,132,255,0.3);
+}
+.lock-date {
+  font-size: 17px; color: rgba(255,255,255,0.6); margin-top: 6px; font-weight: 400;
+}
+.lock-icon {
+  margin-top: 60px;
+  width: 72px; height: 72px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(20px);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lock-icon:active { transform: scale(0.93); background: rgba(255,255,255,0.15); }
+.lock-icon svg { width: 32px; height: 32px; fill: white; }
+.lock-hint {
+  margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.35);
+  letter-spacing: 0.3px;
+}
+.lock-dots {
+  display: flex; gap: 10px; margin-top: 32px;
+}
+.lock-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  transition: all 0.15s;
+}
+.lock-dot.filled { background: white; border-color: white; }
+
+/* ── SETUP SCREEN ── */
+#setupScreen {
+  position: fixed; inset: 0; z-index: 90;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+  overflow-y: auto;
+}
+#setupScreen.visible { display: flex; }
+
+.setup-header { margin-bottom: 32px; }
+.setup-header h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+.setup-header p { color: var(--text2); font-size: 15px; margin-top: 6px; line-height: 1.4; }
+
+.setup-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.setup-section-title {
+  padding: 14px 16px 10px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px;
+}
+.setup-field {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.setup-field:first-of-type { border-top: none; }
+.setup-field label { font-size: 13px; color: var(--text2); }
+.setup-field input {
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-size: 16px;
+  font-family: inherit; width: 100%;
+}
+.setup-field input::placeholder { color: var(--text3); }
+
+.btn-primary {
+  background: var(--accent);
+  color: white; border: none; border-radius: var(--radius-sm);
+  padding: 16px; font-size: 17px; font-weight: 600;
+  width: 100%; cursor: pointer; margin-top: 8px;
+  transition: opacity 0.15s;
+}
+.btn-primary:active { opacity: 0.7; }
+
+.setup-note {
+  font-size: 12px; color: var(--text3); text-align: center;
+  margin-top: 12px; line-height: 1.5;
+}
+
+/* ── MAIN APP ── */
+#app {
+  display: none;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--safe-bottom) + 70px);
+}
+#app.visible { display: flex; }
+
+/* ── HEADER ── */
+.app-header {
+  padding: calc(var(--safe-top) + 8px) 20px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.app-header h1 {
+  font-size: 34px; font-weight: 700; letter-spacing: -0.5px;
+}
+.header-greeting { font-size: 13px; color: var(--text2); font-weight: 400; }
+.header-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #0a84ff, #30d158);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+}
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1; overflow-y: auto; padding: 0 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-area::-webkit-scrollbar { display: none; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 20px; font-weight: 600; letter-spacing: -0.3px;
+  margin: 24px 4px 12px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title-group { display: flex; align-items: center; gap: 10px; }
+.card-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.card-title { font-size: 16px; font-weight: 600; }
+.card-subtitle { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+/* ── STATUS BADGE ── */
+.badge {
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── ROBOT CARD ── */
+.robot-status-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.robot-stat {
+  text-align: center; flex: 1;
+}
+.robot-stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.robot-stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.robot-battery-bar {
+  height: 4px; background: var(--card2); border-radius: 2px;
+  margin-bottom: 16px; overflow: hidden;
+}
+.robot-battery-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.robot-actions {
+  display: flex; gap: 8px;
+}
+.robot-btn {
+  flex: 1; padding: 13px 8px;
+  border-radius: var(--radius-sm); border: none; cursor: pointer;
+  font-size: 14px; font-weight: 600; font-family: inherit;
+  transition: all 0.15s;
+}
+.robot-btn:active { transform: scale(0.96); }
+.robot-btn-primary { background: var(--accent); color: white; }
+.robot-btn-secondary { background: var(--card2); color: var(--text); }
+.robot-btn-danger { background: rgba(255,69,58,0.2); color: var(--red); }
+
+/* ── ENERGY CARD ── */
+.energy-big {
+  font-size: 48px; font-weight: 700; letter-spacing: -2px;
+  line-height: 1;
+}
+.energy-unit { font-size: 20px; color: var(--text2); font-weight: 400; }
+.energy-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+.energy-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 70px; margin: 16px 0;
+}
+.energy-bar {
+  flex: 1; border-radius: 3px 3px 0 0;
+  min-height: 4px; transition: height 0.5s ease;
+}
+
+.energy-tabs {
+  display: flex; gap: 0;
+  background: var(--card2); border-radius: 10px; padding: 2px;
+  margin-bottom: 16px;
+}
+.energy-tab {
+  flex: 1; padding: 7px; text-align: center;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  border-radius: 8px; cursor: pointer; transition: all 0.15s;
+  border: none; background: transparent; font-family: inherit;
+}
+.energy-tab.active { background: var(--card); color: var(--text); font-weight: 600; }
+
+.energy-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-top: 8px;
+}
+.energy-stat-card {
+  background: var(--card2); border-radius: var(--radius-sm);
+  padding: 12px; border: 1px solid var(--border);
+}
+.energy-stat-val { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.energy-stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* ── WATER CARD ── */
+.water-input-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px;
+}
+.water-input {
+  flex: 1; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  color: var(--text); font-size: 17px; font-family: inherit;
+  outline: none;
+}
+.water-input:focus { border-color: var(--accent); }
+.water-btn {
+  background: var(--accent); color: white; border: none;
+  border-radius: var(--radius-sm); padding: 12px 18px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: opacity 0.15s;
+}
+.water-btn:active { opacity: 0.7; }
+
+.water-history {
+  margin-top: 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.water-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.water-entry:last-child { border-bottom: none; }
+.water-entry-date { font-size: 13px; color: var(--text2); }
+.water-entry-val { font-size: 15px; font-weight: 600; }
+.water-entry-diff { font-size: 12px; }
+
+/* ── TAB BAR ── */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,10,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 4px; cursor: pointer;
+  color: var(--text3); transition: color 0.15s;
+  border: none; background: transparent; font-family: inherit;
+}
+.tab-item.active { color: var(--accent); }
+.tab-item svg { width: 24px; height: 24px; margin-bottom: 3px; }
+.tab-item span { font-size: 10px; font-weight: 500; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(var(--safe-bottom) + 80px); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(50,50,52,0.95);
+  backdrop-filter: blur(20px);
+  color: white; padding: 12px 20px; border-radius: 20px;
+  font-size: 14px; font-weight: 500;
+  opacity: 0; transition: all 0.3s ease; pointer-events: none;
+  white-space: nowrap; z-index: 50;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── LOADING ── */
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-row {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--text2); font-size: 14px; padding: 8px 0;
+}
+
+/* ── SETTINGS TAB ── */
+.settings-section {
+  background: var(--card); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  margin-bottom: 12px;
+}
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { font-size: 16px; }
+.settings-row-value { font-size: 14px; color: var(--text2); }
+.settings-row-action {
+  font-size: 14px; color: var(--accent); cursor: pointer;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+.delay-1 { animation-delay: 0.05s; opacity: 0; }
+.delay-2 { animation-delay: 0.1s; opacity: 0; }
+.delay-3 { animation-delay: 0.15s; opacity: 0; }
+.delay-4 { animation-delay: 0.2s; opacity: 0; }
+```
+
+  </style>
+</head>
+<body>
+
+<!-- ── LOCK SCREEN ── -->
+
+<div id="lockScreen">
+  <div class="lock-time" id="lockTime">00:00</div>
+  <div class="lock-date" id="lockDate"></div>
+  <div class="lock-icon" id="lockBtn" onclick="triggerFaceID()">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 3H7C4.79 3 3 4.79 3 7v2h2V7c0-1.1.9-2 2-2h2V3zm6 0h2c2.21 0 4 1.79 4 4v2h-2V7c0-1.1-.9-2-2-2h-2V3zM3 15v2c0 2.21 1.79 4 4 4h2v-2H7c-1.1 0-2-.9-2-2v-2H3zm18 2v-2h-2v2c0 1.1-.9 2-2 2h-2v2h2c2.21 0 4-1.79 4-4zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+    </svg>
+  </div>
+  <div class="lock-hint">Face ID pour déverrouiller</div>
+  <div class="lock-dots">
+    <div class="lock-dot" id="d1"></div>
+    <div class="lock-dot" id="d2"></div>
+    <div class="lock-dot" id="d3"></div>
+    <div class="lock-dot" id="d4"></div>
+    <div class="lock-dot" id="d5"></div>
+    <div class="lock-dot" id="d6"></div>
+  </div>
+</div>
+
+<!-- ── SETUP SCREEN ── -->
+
+<div id="setupScreen">
+  <div class="setup-header">
+    <h1>Bienvenue 👋</h1>
+    <p>Configurez vos équipements pour commencer à les piloter depuis une seule app.</p>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-section-title">Serveur (Railway)</div>
+    <div class="setup-field">
+      <label>URL de votre serveur</label>
+      <input id="serverUrl" type="url" placeholder="https://votre-app.railway.app" autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-section-title">🤖 Dreame</div>
+    <div class="setup-field">
+      <label>Email</label>
+      <input id="dreameEmail" type="email" placeholder="votre@email.com" autocomplete="email" />
+    </div>
+    <div class="setup-field">
+      <label>Mot de passe</label>
+      <input id="dreamePassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="setup-field">
+      <label>Région</label>
+      <input id="dreameRegion" type="text" placeholder="eu" value="eu" />
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-section-title">⚡ Enedis</div>
+    <div class="setup-field">
+      <label>Numéro de PDL (14 chiffres)</label>
+      <input id="enedisPdl" type="text" placeholder="12345678901234" inputmode="numeric" maxlength="14" />
+    </div>
+    <div class="setup-field">
+      <label>Token d'accès Enedis</label>
+      <input id="enedisToken" type="text" placeholder="Obtenu depuis votre espace Enedis" />
+    </div>
+  </div>
+
+<button class="btn-primary" onclick="saveSetup()">Enregistrer et continuer</button>
+
+  <p class="setup-note">Vos données sont stockées localement sur votre iPhone et ne sont jamais partagées.</p>
+</div>
+
+<!-- ── MAIN APP ── -->
+
+<div id="app">
+  <header class="app-header">
+    <div>
+      <div class="header-greeting" id="greeting">Bonjour</div>
+      <h1>Ma Maison</h1>
+    </div>
+    <div class="header-avatar" onclick="showTab('settings')">M</div>
+  </header>
+
+  <!-- TAB: HOME -->
+
+  <div id="tab-home" class="scroll-area">
+
+```
+<!-- Robot Dreame -->
+<div class="section-title fade-up delay-1">Aspirateur</div>
+<div class="card fade-up delay-2" id="robotCard">
+  <div class="card-header">
+    <div class="card-title-group">
+      <div class="card-icon" style="background:rgba(10,132,255,0.15)">🤖</div>
+      <div>
+        <div class="card-title">Dreame L10S Ultra</div>
+        <div class="card-subtitle" id="robotSubtitle">Chargement…</div>
+      </div>
+    </div>
+    <div class="badge" id="robotBadge" style="background:rgba(100,100,100,0.2);color:#888">
+      <div class="badge-dot" style="background:#888"></div>
+      <span id="robotBadgeText">—</span>
+    </div>
+  </div>
+
+  <div class="robot-battery-bar">
+    <div class="robot-battery-fill" id="batteryFill" style="width:0%;background:var(--green)"></div>
+  </div>
+
+  <div class="robot-status-row">
+    <div class="robot-stat">
+      <div class="robot-stat-value" id="robotBattery">—</div>
+      <div class="robot-stat-label">Batterie</div>
+    </div>
+    <div class="robot-stat">
+      <div class="robot-stat-value" id="robotArea">—</div>
+      <div class="robot-stat-label">Surface m²</div>
+    </div>
+    <div class="robot-stat">
+      <div class="robot-stat-value" id="robotTime">—</div>
+      <div class="robot-stat-label">Durée</div>
+    </div>
+  </div>
+
+  <div class="robot-actions" id="robotActions">
+    <button class="robot-btn robot-btn-primary" onclick="robotCommand('start')">▶ Démarrer</button>
+    <button class="robot-btn robot-btn-secondary" onclick="robotCommand('pause')">⏸ Pause</button>
+    <button class="robot-btn robot-btn-danger" onclick="robotCommand('home')">⌂ Base</button>
+  </div>
+</div>
+
+<!-- Énergie -->
+<div class="section-title fade-up delay-3">Électricité</div>
+<div class="card fade-up delay-4" id="energyCard">
+  <div class="card-header">
+    <div class="card-title-group">
+      <div class="card-icon" style="background:rgba(255,159,10,0.15)">⚡</div>
+      <div>
+        <div class="card-title">Consommation</div>
+        <div class="card-subtitle">Total Énergie · Enedis</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="energy-tabs">
+    <button class="energy-tab active" onclick="setEnergyTab('day',this)">Jour</button>
+    <button class="energy-tab" onclick="setEnergyTab('week',this)">Semaine</button>
+    <button class="energy-tab" onclick="setEnergyTab('month',this)">Mois</button>
+  </div>
+
+  <div>
+    <span class="energy-big" id="energyMain">—</span>
+    <span class="energy-unit"> kWh</span>
+  </div>
+  <div class="energy-sub" id="energySub">Chargement des données…</div>
+
+  <div class="energy-chart" id="energyChart"></div>
+
+  <div class="energy-stats">
+    <div class="energy-stat-card">
+      <div class="energy-stat-val" id="energyCost">—</div>
+      <div class="energy-stat-lbl">Coût estimé (€)</div>
+    </div>
+    <div class="energy-stat-card">
+      <div class="energy-stat-val" id="energyPeak">—</div>
+      <div class="energy-stat-lbl">Pic de conso (kWh)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Eau -->
+<div class="section-title">Eau</div>
+<div class="card" id="waterCard">
+  <div class="card-header">
+    <div class="card-title-group">
+      <div class="card-icon" style="background:rgba(48,209,88,0.15)">💧</div>
+      <div>
+        <div class="card-title">Consommation d'eau</div>
+        <div class="card-subtitle">La Rese · Saisie manuelle</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:8px">
+    <span class="energy-big" id="waterMain">—</span>
+    <span class="energy-unit"> m³</span>
+  </div>
+  <div class="energy-sub" id="waterSub">Dernier relevé non renseigné</div>
+
+  <div class="water-input-row" style="margin-top:16px">
+    <input class="water-input" type="number" id="waterInput" placeholder="Index compteur (m³)" inputmode="decimal" />
+    <button class="water-btn" onclick="saveWaterEntry()">Ajouter</button>
+  </div>
+
+  <div class="water-history" id="waterHistory"></div>
+</div>
+
+<div style="height:8px"></div>
+```
+
+  </div>
+
+  <!-- TAB: SETTINGS -->
+
+  <div id="tab-settings" class="scroll-area" style="display:none">
+    <div class="section-title">Paramètres</div>
+
+```
+<div class="settings-section">
+  <div class="settings-row">
+    <span class="settings-row-label">Serveur</span>
+    <span class="settings-row-value" id="settingsServer">—</span>
+  </div>
+  <div class="settings-row">
+    <span class="settings-row-label">Dreame</span>
+    <span class="settings-row-value" id="settingsDreame">—</span>
+  </div>
+  <div class="settings-row">
+    <span class="settings-row-label">PDL Enedis</span>
+    <span class="settings-row-value" id="settingsPdl">—</span>
+  </div>
+</div>
+
+<div class="settings-section">
+  <div class="settings-row">
+    <span class="settings-row-label">Actualiser les données</span>
+    <span class="settings-row-action" onclick="refreshAll()">Actualiser</span>
+  </div>
+  <div class="settings-row">
+    <span class="settings-row-label">Reconfigurer</span>
+    <span class="settings-row-action" onclick="resetSetup()">Modifier</span>
+  </div>
+</div>
+
+<div class="settings-section">
+  <div class="settings-row">
+    <span class="settings-row-label">Version</span>
+    <span class="settings-row-value">1.0.0</span>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- TAB BAR -->
+
+<nav class="tab-bar" id="tabBar" style="display:none">
+  <button class="tab-item active" id="tab-btn-home" onclick="showTab('home')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Accueil</span>
+  </button>
+  <button class="tab-item" id="tab-btn-settings" onclick="showTab('settings')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.04.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 110-7.2 3.6 3.6 0 010 7.2z"/></svg>
+    <span>Réglages</span>
+  </button>
+</nav>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let cfg = {};
+let dreameSession = null;
+let dreameDeviceId = null;
+let energyTab = 'day';
+let robotPollInterval = null;
+let energyData = { day: [], week: [], month: [] };
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  updateLockClock();
+  setInterval(updateLockClock, 1000);
+  setGreeting();
+  cfg = loadConfig();
+
+  // Check if WebAuthn / Face ID is available
+  if (!window.PublicKeyCredential) {
+    document.querySelector('.lock-hint').textContent = 'Appuyez pour déverrouiller';
+  }
+});
+
+function updateLockClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('lockTime').textContent = `${h}:${m}`;
+  document.getElementById('lockDate').textContent = now.toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+}
+
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  document.getElementById('greeting').textContent = g;
+}
+
+// ─── FACE ID / WEBAUTHN ──────────────────────────────────────────────────────
+async function triggerFaceID() {
+  // Try WebAuthn (Face ID on iPhone)
+  if (window.PublicKeyCredential) {
+    try {
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      // Check if we have a registered credential
+      const credId = localStorage.getItem('credentialId');
+
+      if (!credId) {
+        // First time: register
+        await registerBiometric();
+        return;
+      }
+
+      // Authenticate
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          timeout: 60000,
+          userVerification: 'required',
+          allowCredentials: [{
+            type: 'public-key',
+            id: base64ToBuffer(credId),
+          }],
+        }
+      });
+
+      if (assertion) unlock();
+    } catch (e) {
+      // Fallback: PIN
+      showPinFallback();
+    }
+  } else {
+    showPinFallback();
+  }
+}
+
+async function registerBiometric() {
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const userId = new Uint8Array(16);
+    crypto.getRandomValues(userId);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'Ma Maison', id: window.location.hostname || 'localhost' },
+        user: { id: userId, name: 'proprietaire', displayName: 'Propriétaire' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+        },
+        timeout: 60000,
+      }
+    });
+
+    localStorage.setItem('credentialId', bufferToBase64(credential.rawId));
+    showToast('Face ID enregistré !');
+    unlock();
+  } catch (e) {
+    showPinFallback();
+  }
+}
+
+// Simple PIN fallback (1234)
+let pinBuffer = '';
+function showPinFallback() {
+  document.querySelector('.lock-hint').textContent = 'Entrez le code 1-2-3-4';
+  pinBuffer = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lockScreen').classList.contains('hidden')) {
+    if ('0123456789'.includes(e.key)) {
+      pinBuffer += e.key;
+      const dots = ['d1','d2','d3','d4','d5','d6'];
+      dots.forEach((id, i) => {
+        document.getElementById(id).classList.toggle('filled', i < pinBuffer.length);
+      });
+      if (pinBuffer.length === 4) {
+        if (pinBuffer === '1234') {
+          setTimeout(unlock, 200);
+        } else {
+          pinBuffer = '';
+          dots.forEach(id => document.getElementById(id).classList.remove('filled'));
+          showToast('Code incorrect');
+        }
+      }
+    }
+  }
+});
+
+function unlock() {
+  document.getElementById('lockScreen').classList.add('hidden');
+  const hasCfg = cfg.serverUrl && cfg.dreameEmail && cfg.enedisPdl;
+  if (hasCfg) {
+    showApp();
+  } else {
+    document.getElementById('setupScreen').classList.add('visible');
+  }
+}
+
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem('maMaisonConfig') || '{}'); } catch { return {}; }
+}
+
+function saveSetup() {
+  const serverUrl = document.getElementById('serverUrl').value.trim().replace(/\/$/, '');
+  const dreameEmail = document.getElementById('dreameEmail').value.trim();
+  const dreamePassword = document.getElementById('dreamePassword').value;
+  const dreameRegion = document.getElementById('dreameRegion').value.trim() || 'eu';
+  const enedisPdl = document.getElementById('enedisPdl').value.trim();
+  const enedisToken = document.getElementById('enedisToken').value.trim();
+
+  if (!serverUrl || !dreameEmail || !dreamePassword || !enedisPdl) {
+    showToast('Veuillez remplir tous les champs requis');
+    return;
+  }
+
+  cfg = { serverUrl, dreameEmail, dreamePassword, dreameRegion, enedisPdl, enedisToken };
+  localStorage.setItem('maMaisonConfig', JSON.stringify(cfg));
+  document.getElementById('setupScreen').classList.remove('visible');
+  showApp();
+}
+
+function resetSetup() {
+  document.getElementById('serverUrl').value = cfg.serverUrl || '';
+  document.getElementById('dreameEmail').value = cfg.dreameEmail || '';
+  document.getElementById('dreamePassword').value = cfg.dreamePassword || '';
+  document.getElementById('dreameRegion').value = cfg.dreameRegion || 'eu';
+  document.getElementById('enedisPdl').value = cfg.enedisPdl || '';
+  document.getElementById('enedisToken').value = cfg.enedisToken || '';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('tabBar').style.display = 'none';
+  document.getElementById('setupScreen').classList.add('visible');
+}
+
+// ─── APP SHOW ────────────────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('tabBar').style.display = 'flex';
+  updateSettingsDisplay();
+  refreshAll();
+}
+
+function showTab(tab) {
+  ['home', 'settings'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === tab);
+  });
+}
+
+function updateSettingsDisplay() {
+  document.getElementById('settingsServer').textContent = cfg.serverUrl ? '✓ Configuré' : '—';
+  document.getElementById('settingsDreame').textContent = cfg.dreameEmail || '—';
+  document.getElementById('settingsPdl').textContent = cfg.enedisPdl
+    ? cfg.enedisPdl.slice(0,4) + '··' + cfg.enedisPdl.slice(-4) : '—';
+}
+
+async function refreshAll() {
+  await Promise.all([loginDreame(), loadEnergy(), loadWater()]);
+}
+
+// ─── DREAME ──────────────────────────────────────────────────────────────────
+async function loginDreame() {
+  setRobotLoading(true);
+  try {
+    const res = await fetch(`${cfg.serverUrl}/api/dreame/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: cfg.dreameEmail,
+        password: cfg.dreamePassword,
+        region: cfg.dreameRegion,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    dreameSession = data;
+
+    // Get devices
+    const devRes = await fetch(`${cfg.serverUrl}/api/dreame/devices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dreameSession),
+    });
+    const devData = await devRes.json();
+    if (devData.devices?.length > 0) {
+      dreameDeviceId = devData.devices[0].did;
+      await pollRobotStatus();
+      robotPollInterval = setInterval(pollRobotStatus, 30000);
+    } else {
+      setRobotError('Aucun appareil trouvé');
+    }
+  } catch (e) {
+    setRobotError(e.message);
+  }
+}
+
+async function pollRobotStatus() {
+  if (!dreameSession || !dreameDeviceId) return;
+  try {
+    const res = await fetch(`${cfg.serverUrl}/api/dreame/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...dreameSession, did: dreameDeviceId }),
+    });
+    const data = await res.json();
+    updateRobotUI(data);
+  } catch (e) {
+    console.error('Robot status error:', e);
+  }
+}
+
+const ROBOT_STATUS_MAP = {
+  0: { label: 'En veille', color: '#636366', bg: 'rgba(99,99,102,0.2)' },
+  1: { label: 'Nettoyage', color: '#30d158', bg: 'rgba(48,209,88,0.2)' },
+  2: { label: 'Retour base', color: '#ff9f0a', bg: 'rgba(255,159,10,0.2)' },
+  3: { label: 'En charge', color: '#0a84ff', bg: 'rgba(10,132,255,0.2)' },
+  4: { label: 'En pause', color: '#ff453a', bg: 'rgba(255,69,58,0.2)' },
+  5: { label: 'Terminé', color: '#30d158', bg: 'rgba(48,209,88,0.15)' },
+};
+
+function updateRobotUI(data) {
+  const props = data?.result || [];
+  const get = (siid, piid) => props.find(p => p.siid === siid && p.piid === piid)?.value;
+
+  const battery = get(2, 1) ?? '—';
+  const status = get(2, 2) ?? 0;
+  const area = get(9, 1) ?? '—';
+  const time = get(9, 2) ?? '—';
+
+  const st = ROBOT_STATUS_MAP[status] || ROBOT_STATUS_MAP[0];
+
+  document.getElementById('robotBattery').textContent = battery !== '—' ? `${battery}%` : '—';
+  document.getElementById('robotArea').textContent = area !== '—' ? `${area}` : '—';
+  document.getElementById('robotTime').textContent = time !== '—' ? `${Math.round(time/60)}min` : '—';
+  document.getElementById('batteryFill').style.width = `${battery}%`;
+  document.getElementById('batteryFill').style.background =
+    battery > 50 ? 'var(--green)' : battery > 20 ? 'var(--orange)' : 'var(--red)';
+
+  const badge = document.getElementById('robotBadge');
+  badge.style.background = st.bg;
+  badge.style.color = st.color;
+  badge.querySelector('.badge-dot').style.background = st.color;
+  document.getElementById('robotBadgeText').textContent = st.label;
+  document.getElementById('robotSubtitle').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}`;
+
+  setRobotLoading(false);
+}
+
+function setRobotLoading(loading) {
+  const sub = document.getElementById('robotSubtitle');
+  if (loading) sub.textContent = 'Connexion…';
+}
+
+function setRobotError(msg) {
+  document.getElementById('robotSubtitle').textContent = `Erreur : ${msg}`;
+  document.getElementById('robotBadgeText').textContent = 'Hors ligne';
+}
+
+async function robotCommand(cmd) {
+  if (!dreameSession || !dreameDeviceId) { showToast('Robot non connecté'); return; }
+
+  const commands = {
+    start: { method: 'action', siid: 2, aiid: 1 },
+    pause: { method: 'action', siid: 2, aiid: 2 },
+    home:  { method: 'action', siid: 2, aiid: 3 },
+  };
+
+  const c = commands[cmd];
+  const labels = { start: 'Démarrage…', pause: 'Pause…', home: 'Retour à la base…' };
+  showToast(labels[cmd]);
+
+  try {
+    await fetch(`${cfg.serverUrl}/api/dreame/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...dreameSession,
+        did: dreameDeviceId,
+        ...c,
+      }),
+    });
+    setTimeout(pollRobotStatus, 2000);
+  } catch (e) {
+    showToast('Erreur commande');
+  }
+}
+
+// ─── ENEDIS / ÉNERGIE ────────────────────────────────────────────────────────
+async function loadEnergy() {
+  if (!cfg.enedisPdl || !cfg.enedisToken) {
+    document.getElementById('energySub').textContent = 'Token Enedis non configuré';
+    return;
+  }
+
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  const minus = (n) => { const d = new Date(today); d.setDate(d.getDate()-n); return d; };
+
+  try {
+    // Daily last 30 days
+    const res = await fetch(
+      `${cfg.serverUrl}/api/enedis/consumption/daily?token=${cfg.enedisToken}&pdl=${cfg.enedisPdl}&start=${fmt(minus(30))}&end=${fmt(today)}`
+    );
+    const data = await res.json();
+    const intervals = data?.meter_reading?.interval_reading || [];
+    energyData.month = intervals.map(r => ({ date: r.date, value: parseFloat(r.value)/1000 }));
+    energyData.week = energyData.month.slice(-7);
+    energyData.day = energyData.month.slice(-1);
+
+    renderEnergyTab();
+  } catch (e) {
+    document.getElementById('energySub').textContent = 'Erreur chargement Enedis';
+    // Show demo data if error
+    renderDemoEnergy();
+  }
+}
+
+function renderDemoEnergy() {
+  const demo = Array.from({length:30}, (_,i) => ({
+    date: new Date(Date.now()-i*86400000).toISOString().split('T')[0],
+    value: +(Math.random()*8+5).toFixed(2)
+  })).reverse();
+  energyData.month = demo;
+  energyData.week = demo.slice(-7);
+  energyData.day = demo.slice(-1);
+  renderEnergyTab();
+}
+
+function setEnergyTab(tab, btn) {
+  energyTab = tab;
+  document.querySelectorAll('.energy-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEnergyTab();
+}
+
+function renderEnergyTab() {
+  const data = energyData[energyTab === 'day' ? 'day' : energyTab === 'week' ? 'week' : 'month'];
+  if (!data || data.length === 0) return;
+
+  const total = data.reduce((s,d) => s+d.value, 0);
+  const peak = Math.max(...data.map(d=>d.value));
+  const costRate = 0.2276; // €/kWh TTC
+
+  document.getElementById('energyMain').textContent = total.toFixed(energyTab === 'day' ? 2 : 1);
+  document.getElementById('energyCost').textContent = `${(total*costRate).toFixed(2)} €`;
+  document.getElementById('energyPeak').textContent = peak.toFixed(2);
+
+  const labels = { day: "Aujourd'hui", week: '7 derniers jours', month: '30 derniers jours' };
+  document.getElementById('energySub').textContent = labels[energyTab];
+
+  // Chart
+  const chart = document.getElementById('energyChart');
+  chart.innerHTML = '';
+  const maxVal = Math.max(...data.map(d=>d.value), 0.1);
+  data.forEach(d => {
+    const bar = document.createElement('div');
+    bar.className = 'energy-bar';
+    const pct = (d.value / maxVal) * 100;
+    bar.style.cssText = `height:${pct}%;background:linear-gradient(180deg,#ff9f0a,rgba(255,159,10,0.4));flex:1;border-radius:3px 3px 0 0;min-height:4px`;
+    chart.appendChild(bar);
+  });
+}
+
+// ─── EAU ─────────────────────────────────────────────────────────────────────
+function loadWater() {
+  const entries = JSON.parse(localStorage.getItem('waterEntries') || '[]');
+  renderWater(entries);
+}
+
+function saveWaterEntry() {
+  const val = parseFloat(document.getElementById('waterInput').value);
+  if (isNaN(val) || val <= 0) { showToast('Index invalide'); return; }
+
+  const entries = JSON.parse(localStorage.getItem('waterEntries') || '[]');
+  entries.push({ date: new Date().toISOString(), value: val });
+  entries.sort((a,b) => new Date(b.date)-new Date(a.date));
+  localStorage.setItem('waterEntries', JSON.stringify(entries));
+
+  document.getElementById('waterInput').value = '';
+  renderWater(entries);
+  showToast('Relevé enregistré ✓');
+}
+
+function renderWater(entries) {
+  const history = document.getElementById('waterHistory');
+  history.innerHTML = '';
+
+  if (entries.length === 0) {
+    document.getElementById('waterMain').textContent = '—';
+    document.getElementById('waterSub').textContent = 'Aucun relevé enregistré';
+    return;
+  }
+
+  document.getElementById('waterMain').textContent = entries[0].value.toFixed(1);
+  document.getElementById('waterSub').textContent = `Relevé du ${new Date(entries[0].date).toLocaleDateString('fr-FR')}`;
+
+  entries.slice(0, 5).forEach((e, i) => {
+    const prev = entries[i+1];
+    const diff = prev ? (e.value - prev.value).toFixed(1) : null;
+    const row = document.createElement('div');
+    row.className = 'water-entry';
+    row.innerHTML = `
+      <div>
+        <div style="font-size:15px;font-weight:500">${e.value.toFixed(1)} m³</div>
+        <div class="water-entry-date">${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long'})}</div>
+      </div>
+      ${diff !== null ? `<div class="water-entry-diff" style="color:${diff>5?'var(--red)':'var(--green)'}">+${diff} m³</div>` : ''}
+    `;
+    history.appendChild(row);
+  });
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function bufferToBase64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+
+function base64ToBuffer(b64) {
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+</script>
+
+</body>
+</html>
