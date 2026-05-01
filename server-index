@@ -1,0 +1,271 @@
+const express = require(‘express’);
+const cors = require(‘cors’);
+const axios = require(‘axios’);
+const crypto = require(‘crypto’);
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 3000;
+
+// ─── DREAME / XIAOMI ────────────────────────────────────────────────────────
+
+const XIAOMI_SERVERS = {
+eu: ‘https://eu.api.io.mi.com/app’,
+cn: ‘https://api.io.mi.com/app’,
+us: ‘https://us.api.io.mi.com/app’,
+};
+
+function md5(str) {
+return crypto.createHash(‘md5’).update(str).digest(‘hex’);
+}
+
+function generateSignature(path, params, ssecurity, nonce) {
+const signStr = [path, `_nonce=${nonce}`, `data=${JSON.stringify(params)}`].join(’&’);
+const hmac = crypto.createHmac(‘sha256’, Buffer.from(ssecurity, ‘base64’));
+hmac.update(signStr);
+return hmac.digest(‘base64’);
+}
+
+// Login Xiaomi/Dreame
+app.post(’/api/dreame/login’, async (req, res) => {
+const { email, password, region = ‘eu’ } = req.body;
+try {
+// Step 1: Get service token
+const loginRes = await axios.post(
+‘https://account.xiaomi.com/pass/serviceLoginAuth2’,
+new URLSearchParams({
+user: email,
+hash: md5(password).toUpperCase(),
+sid: ‘xiaomiio’,
+_json: ‘true’,
+serviceParam: ‘{“checkSafePhone”:false}’,
+}),
+{
+headers: {
+‘Content-Type’: ‘application/x-www-form-urlencoded’,
+‘User-Agent’: ‘APP/com.xiaomi.mihome APPV/6.0.103’,
+Cookie: ‘sdkVersion=3.4.1; deviceId=smartmyhome’,
+},
+}
+);
+
+```
+const raw = loginRes.data.replace('&&&START&&&', '');
+const parsed = JSON.parse(raw);
+
+if (parsed.result !== 'ok') {
+  return res.status(401).json({ error: 'Identifiants incorrects', detail: parsed.description });
+}
+
+// Step 2: Get auth token
+const tokenRes = await axios.get(parsed.location, {
+  headers: { 'User-Agent': 'APP/com.xiaomi.mihome APPV/6.0.103' },
+  maxRedirects: 0,
+  validateStatus: s => s < 400,
+});
+
+const cookies = tokenRes.headers['set-cookie'] || [];
+const serviceToken = cookies
+  .find(c => c.includes('serviceToken='))
+  ?.split(';')[0]
+  ?.replace('serviceToken=', '');
+
+if (!serviceToken) return res.status(401).json({ error: 'Impossible de récupérer le token' });
+
+return res.json({
+  userId: parsed.userId,
+  ssecurity: parsed.ssecurity,
+  serviceToken,
+  region,
+});
+```
+
+} catch (err) {
+console.error(‘Dreame login error:’, err.message);
+return res.status(500).json({ error: ‘Erreur de connexion Dreame’, detail: err.message });
+}
+});
+
+// Get Dreame devices
+app.post(’/api/dreame/devices’, async (req, res) => {
+const { userId, ssecurity, serviceToken, region = ‘eu’ } = req.body;
+const server = XIAOMI_SERVERS[region] || XIAOMI_SERVERS.eu;
+
+try {
+const nonce = crypto.randomBytes(8).toString(‘base64’);
+const params = { getVirtualModel: false, getHuamiDevices: 0 };
+const signature = generateSignature(’/home/device_list’, params, ssecurity, nonce);
+
+```
+const devRes = await axios.post(`${server}/home/device_list`, JSON.stringify(params), {
+  headers: {
+    'Content-Type': 'application/json',
+    'x-xiaomi-protocal-flag-cli': 'PROTOCAL-HTTP2',
+    'MIOT-ENCRYPT-ALGORITHM': 'ENCRYPT-RC4',
+    Cookie: `userId=${userId}; serviceToken=${serviceToken}; yetAnotherServiceToken=${serviceToken}`,
+    'Signed-Nonce': nonce,
+    Signature: signature,
+  },
+});
+
+const devices = devRes.data?.result?.list?.filter(d =>
+  d.model?.toLowerCase().includes('dreame') || d.model?.toLowerCase().includes('roborock')
+) || [];
+
+return res.json({ devices });
+```
+
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur récupération appareils’, detail: err.message });
+}
+});
+
+// Send command to Dreame robot
+app.post(’/api/dreame/command’, async (req, res) => {
+const { userId, ssecurity, serviceToken, did, model, method, params = [], region = ‘eu’ } = req.body;
+const server = XIAOMI_SERVERS[region] || XIAOMI_SERVERS.eu;
+
+try {
+const nonce = crypto.randomBytes(8).toString(‘base64’);
+const body = { did, model, method, params };
+const signature = generateSignature(’/miotspec/prop/get’, body, ssecurity, nonce);
+
+```
+const cmdRes = await axios.post(`${server}/miotspec/prop/get`, JSON.stringify(body), {
+  headers: {
+    'Content-Type': 'application/json',
+    Cookie: `userId=${userId}; serviceToken=${serviceToken}`,
+    'Signed-Nonce': nonce,
+    Signature: signature,
+  },
+});
+
+return res.json(cmdRes.data);
+```
+
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur commande Dreame’, detail: err.message });
+}
+});
+
+// Get Dreame robot status
+app.post(’/api/dreame/status’, async (req, res) => {
+const { userId, ssecurity, serviceToken, did, region = ‘eu’ } = req.body;
+const server = XIAOMI_SERVERS[region] || XIAOMI_SERVERS.eu;
+
+try {
+const nonce = crypto.randomBytes(8).toString(‘base64’);
+// MIoT properties for Dreame L10S Ultra
+const body = {
+params: [
+{ did, siid: 2, piid: 1 },  // battery
+{ did, siid: 2, piid: 2 },  // status
+{ did, siid: 2, piid: 3 },  // fault
+{ did, siid: 2, piid: 4 },  // mode
+{ did, siid: 9, piid: 1 },  // area cleaned
+{ did, siid: 9, piid: 2 },  // cleaning time
+{ did, siid: 9, piid: 3 },  // total cleanings
+],
+};
+const signature = generateSignature(’/miotspec/prop/get’, body, ssecurity, nonce);
+
+```
+const statusRes = await axios.post(`${server}/miotspec/prop/get`, JSON.stringify(body), {
+  headers: {
+    'Content-Type': 'application/json',
+    Cookie: `userId=${userId}; serviceToken=${serviceToken}`,
+    'Signed-Nonce': nonce,
+    Signature: signature,
+  },
+});
+
+return res.json(statusRes.data);
+```
+
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur statut Dreame’, detail: err.message });
+}
+});
+
+// ─── ENEDIS ─────────────────────────────────────────────────────────────────
+
+const ENEDIS_TOKEN_URL = ‘https://gw.api.enedis.fr/v1/oauth2/token’;
+const ENEDIS_API = ‘https://gw.api.enedis.fr’;
+
+// Exchange Enedis authorization code for token
+app.post(’/api/enedis/token’, async (req, res) => {
+const { code, redirectUri } = req.body;
+const clientId = process.env.ENEDIS_CLIENT_ID;
+const clientSecret = process.env.ENEDIS_CLIENT_SECRET;
+
+if (!clientId || !clientSecret) {
+return res.status(500).json({ error: ‘Variables ENEDIS non configurées sur le serveur’ });
+}
+
+try {
+const tokenRes = await axios.post(
+ENEDIS_TOKEN_URL,
+new URLSearchParams({
+grant_type: ‘authorization_code’,
+client_id: clientId,
+client_secret: clientSecret,
+code,
+redirect_uri: redirectUri,
+}),
+{ headers: { ‘Content-Type’: ‘application/x-www-form-urlencoded’ } }
+);
+return res.json(tokenRes.data);
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur token Enedis’, detail: err.response?.data || err.message });
+}
+});
+
+// Get daily consumption from Enedis
+app.get(’/api/enedis/consumption/daily’, async (req, res) => {
+const { token, pdl, start, end } = req.query;
+try {
+const r = await axios.get(
+`${ENEDIS_API}/v4/metering_data/daily_consumption?start=${start}&end=${end}&usage_point_id=${pdl}`,
+{ headers: { Authorization: `Bearer ${token}` } }
+);
+return res.json(r.data);
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur consommation journalière’, detail: err.response?.data || err.message });
+}
+});
+
+// Get hourly consumption from Enedis
+app.get(’/api/enedis/consumption/hourly’, async (req, res) => {
+const { token, pdl, start, end } = req.query;
+try {
+const r = await axios.get(
+`${ENEDIS_API}/v4/metering_data/consumption_load_curve?start=${start}&end=${end}&usage_point_id=${pdl}`,
+{ headers: { Authorization: `Bearer ${token}` } }
+);
+return res.json(r.data);
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur consommation horaire’, detail: err.response?.data || err.message });
+}
+});
+
+// Get Enedis identity / contract info
+app.get(’/api/enedis/identity’, async (req, res) => {
+const { token, pdl } = req.query;
+try {
+const r = await axios.get(
+`${ENEDIS_API}/v5/customers/usage_points/contracts?usage_point_id=${pdl}`,
+{ headers: { Authorization: `Bearer ${token}` } }
+);
+return res.json(r.data);
+} catch (err) {
+return res.status(500).json({ error: ‘Erreur contrat Enedis’, detail: err.response?.data || err.message });
+}
+});
+
+// ─── HEALTH CHECK ────────────────────────────────────────────────────────────
+
+app.get(’/health’, (_, res) => res.json({ status: ‘ok’, version: ‘1.0.0’ }));
+
+app.listen(PORT, () => console.log(`🏠 Maison connectée serveur démarré sur le port ${PORT}`));
