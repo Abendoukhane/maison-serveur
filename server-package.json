@@ -1,11 +1,11 @@
 {
-  "name": "maison-connectee-server",
+  "name": "maison-serveur",
   "version": "1.0.0",
   "description": "Serveur proxy pour Dreame et Enedis",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "build": "echo ok"
   },
   "dependencies": {
     "axios": "^1.6.0",
